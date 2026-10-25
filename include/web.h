@@ -9,12 +9,12 @@ const char index_html[] PROGMEM = R"rawliteral(
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Cấu hình</title>
   <style>
-    body { font-family: sans-serif; background: #1e1e24; color: #fff; text-align: center; padding: 20px; margin: 0; }
-    .box { max-width: 340px; margin: auto; background: #2b2b36; padding: 20px; border-radius: 12px; }
-    select, input, button { width: 100%; padding: 12px; margin: 8px 0; border-radius: 6px; border: 1px solid #444; background: #18181f; color: #fff; box-sizing: border-box; }
-    button { background: #00adb5; border: none; font-weight: bold; cursor: pointer; }
-    .rescan-btn { background: #393e46; font-size: 13px; padding: 8px; margin-top: 0; }
-    label { display: block; text-align: left; font-size: 13px; color: #ccc; margin-top: 8px; }
+    body { font-family: sans-serif; background: #FEFAF3; color: #7C0E44; text-align: center; padding: 20px; margin: 0; }
+    .box { max-width: 340px; margin: auto; background: #FFCED8; padding: 20px; border-radius: 12px; }
+    select, input, button { width: 100%; padding: 12px; margin: 8px 0; border-radius: 6px; border: 1px solid #FFF4DE; background: #fff4de; color: #7C0E44; box-sizing: border-box; }
+    button { background: #FAACBF; border: none; font-weight: bold; cursor: pointer; }
+    .rescan-btn { background: #F6E2E9; font-size: 13px; padding: 8px; margin-top: 0; }
+    label { display: block; text-align: left; font-size: 13px; color: #7C0E44; margin-top: 8px; }
   </style>
 </head>
 <body>
@@ -56,7 +56,7 @@ const char index_html[] PROGMEM = R"rawliteral(
 
     <button onclick="saveConfig()">Lưu & Kết nối</button>
     
-    <p id="status" style="font-size: 13px; color: #aaa;"></p>
+    <p id="status" style="font-size: 13px; color: #7C0E44;"></p>
   </div>
 
   <script>
