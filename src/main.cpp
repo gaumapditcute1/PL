@@ -2,7 +2,7 @@
 #include <WiFi.h>
 #include <Wire.h>
 #include <WebServer.h>
-#include "Fonts/Org_01.h"
+#include "Fonts/FreeSansBold18pt7b.h"
 #include "esp_sleep.h"
 #include "driver/gpio.h"
 #include "oled.h"
@@ -141,10 +141,11 @@ void loop(){
                 }
                 display.clearDisplay();
                 display.setTextColor(1);
-                display.setTextSize(5);
+                display.setFont(NULL);
+                display.setTextSize(1);
                 display.setTextWrap(false);
-                display.setFont(&Org_01);
-                display.setCursor(4, 40);
+                display.setFont(&FreeSansBold18pt7b);
+                display.setCursor(15, 45);
                 display.print(timeStr);
                 display.display();
             }
