@@ -28,8 +28,15 @@ void save_wifi(String ssid, String pass, long tz_sec){
 
 void wifi_ap(void){
     wifi_config_save = false;
+
+    WiFi.disconnect(true);
+    WiFi.setAutoReconnect(false);
+    delay(100);
+
     WiFi.mode(WIFI_AP_STA);
-    WiFi.softAP(AP_SSID, AP_PASS);
+    WiFi.setTxPower(WIFI_POWER_8_5dBm);
+
+    WiFi.softAP(AP_SSID, AP_PASS, 1, 0, 4);
 
     display.clearDisplay();
     display.setTextColor(1);
@@ -79,6 +86,8 @@ void wifi_ap(void){
         server.send(200, "text/plain", "Đã lưu WiFi & Múi giờ | Đang kết nối...");
         delay(500);
         server.stop();
+        WiFi.softAPdisconnect(true);
+        delay(200);
         wifi_config_save = true;
     });
     server.begin();
@@ -94,6 +103,7 @@ bool wifi_sta(uint8_t timeout_sec){
     if (STA_SSID.length() == 0) return false;
 
     WiFi.mode(WIFI_STA);
+    WiFi.setTxPower(WIFI_POWER_8_5dBm);
     WiFi.begin(STA_SSID.c_str(), STA_PASS.c_str());
 
     unsigned long start_time = millis();

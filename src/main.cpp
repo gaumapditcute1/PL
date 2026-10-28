@@ -33,6 +33,8 @@ int currentFrame = 0;
 unsigned long lastFrameTime = 0;
 
 void setup_sleep_weakups(){
+    display.clearDisplay();
+    display.display();
     display.ssd1306_command(SSD1306_DISPLAYOFF);
     esp_deep_sleep_enable_gpio_wakeup(1ULL << SW_GIF_PIN | 1ULL << SW_CLOCL_PIN | 1ULL << SW_WIFI_PIN, ESP_GPIO_WAKEUP_GPIO_HIGH);
     esp_sleep_enable_timer_wakeup(DRIFT_SLEEP_SEC * 1000000ULL);
@@ -41,35 +43,43 @@ void setup_sleep_weakups(){
 
 void setup(){
     Serial.begin(115200);
-    
+
     pinMode(SW_CLOCL_PIN, INPUT_PULLDOWN);
     pinMode(SW_GIF_PIN, INPUT_PULLDOWN);
     pinMode(SW_WIFI_PIN, INPUT_PULLDOWN);
 
-    time_drift(DRIFT_SLEEP_SEC);
-
-    oledInit(8, 9, 400000);
-
     esp_sleep_wakeup_cause_t wakeup_reason = esp_sleep_get_wakeup_cause();
 
-    if (wakeup_reason == ESP_SLEEP_WAKEUP_TIMER && gpio_get_level(SW_CLOCL_PIN) == 0 && gpio_get_level(SW_GIF_PIN) == 0 && gpio_get_level(SW_WIFI_PIN) == 0){
-        setup_sleep_weakups();
-        return;
+    if (wakeup_reason == ESP_SLEEP_WAKEUP_TIMER) {
+        time_drift(DRIFT_SLEEP_SEC);
+        if (gpio_get_level(SW_CLOCL_PIN) == 0 && gpio_get_level(SW_GIF_PIN) == 0 && gpio_get_level(SW_WIFI_PIN) == 0){
+            esp_deep_sleep_enable_gpio_wakeup(1ULL << SW_GIF_PIN | 1ULL << SW_CLOCL_PIN | 1ULL << SW_WIFI_PIN, ESP_GPIO_WAKEUP_GPIO_HIGH);
+            esp_sleep_enable_timer_wakeup(DRIFT_SLEEP_SEC * 1000000ULL);
+            esp_deep_sleep_start();
+            return;
+        }
+    } else if (wakeup_reason == ESP_SLEEP_WAKEUP_UNDEFINED) {
+        time_drift(0);
     }
 
+    oledInit(8, 9, 400000);
+    oledClear();
+    oledDisplay();
+    
     if (gpio_get_level(SW_CLOCL_PIN) == HIGH){
         display.ssd1306_command(SSD1306_DISPLAYON);
         while (gpio_get_level(SW_CLOCL_PIN) == HIGH) delay(10);
         currentState = STATE_CLOCK;
         stateStartTime = millis();
 
-    }else if(gpio_get_level(SW_GIF_PIN) == HIGH){
+    } else if (gpio_get_level(SW_GIF_PIN) == HIGH){
         display.ssd1306_command(SSD1306_DISPLAYON);
         while (gpio_get_level(SW_GIF_PIN) == HIGH) delay(10);
         currentState = STATE_GIF;
         stateStartTime = millis();
 
-    }else if(gpio_get_level(SW_WIFI_PIN) == HIGH){
+    } else if (gpio_get_level(SW_WIFI_PIN) == HIGH){
+        display.ssd1306_command(SSD1306_DISPLAYON);
         unsigned long pressStart = millis();
         while (gpio_get_level(SW_WIFI_PIN) == HIGH) {
             if (millis() - pressStart >= 5000){
@@ -78,14 +88,13 @@ void setup(){
             delay(50);
         }
         if (millis() - pressStart >= 5000){
-            display.ssd1306_command(SSD1306_DISPLAYON);
             currentState = STATE_AP_CONFIG;
             stateStartTime = millis();
             wifi_ap();
-        }else{
+        } else {
             currentState = STATE_WIFI_SYNC;
         }
-    }else{
+    } else {
         setup_sleep_weakups();
     }
 }
@@ -124,7 +133,7 @@ void loop(){
                 setup_sleep_weakups();
             }
 
-            if (now - lastClockUpdate >= 1000){
+            if (now - lastClockUpdate >= 1000 || lastClockUpdate == 0){
                 lastClockUpdate = now;
                 char timeStr[16];
                 if (!time_sync(timeStr, sizeof(timeStr))){
@@ -135,7 +144,7 @@ void loop(){
                 display.setTextSize(5);
                 display.setTextWrap(false);
                 display.setFont(&Org_01);
-                display.setCursor(13, 40);
+                display.setCursor(4, 40);
                 display.print(timeStr);
                 display.display();
             }
@@ -152,15 +161,27 @@ void loop(){
             break;
         }
         case STATE_WIFI_SYNC: {
-            if (wifi_sta(10)){
-                sync_real_time();
-                char test[16];
-                uint8_t retry = 0;
-                while (!time_sync(test, sizeof(test)) && retry < 15){
-                    delay(200);
-                    retry++;
+            if (wifi_sta(15)){
+                if (wait_for_ntp_sync(10)){
+                    char timeStr[16];
+                    time_sync(timeStr, sizeof(timeStr));
+                    display.clearDisplay();
+                    display.setFont(NULL);
+                    display.setTextSize(1);
+                    display.setCursor(0,10);
+                    display.print("Đồng bộ OK!");
+                    display.display();
+                    delay(2000);
+                }else{
+                    display.clearDisplay();
+                    display.setFont(NULL);
+                    display.setTextSize(1);
+                    display.setCursor(0,10);
+                    display.print("Đồng bộ FALSE!");
+                    display.display();
                 }
             }
+
             WiFi.disconnect(true);
             WiFi.mode(WIFI_OFF);
             setup_sleep_weakups();
